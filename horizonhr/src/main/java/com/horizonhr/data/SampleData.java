@@ -1,5 +1,6 @@
 package com.horizonhr.data;
-
+import com.horizonhr.data.SampleData;
+import com.horizonhr.exception.EmployeeNotFoundException;
 public final class SampleData {
 
     private SampleData() {
