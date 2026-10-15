@@ -7,24 +7,42 @@ import java.util.*;
 
 public class ConsoleMenu {
 
-    // List stores employee records
-    private static final List<String> employees = new ArrayList<>();
+    // Map provides fast employee lookup by ID
+    private static final Map<String, String> employees =
+            new LinkedHashMap<>();
 
-    // Set prevents duplicate check-in/check-out actions
-    private static final Set<String> attendanceActions = new HashSet<>();
+    // Set prevents duplicate attendance actions
+    private static final Set<String> attendanceActions =
+            new HashSet<>();
 
-    // Queue holds leave requests waiting for processing
-    private static final Queue<String> leaveRequests = new LinkedList<>();
+    // Queue stores pending leave requests
+    private static final Queue<String> leaveRequests =
+            new LinkedList<>();
+
+    // Comparator 1: Sort employees by name
+    private static final Comparator<String> BY_NAME =
+            Comparator.comparing(
+                    e -> e.split(" - ")[1],
+                    String.CASE_INSENSITIVE_ORDER
+            );
+
+    // Comparator 2: Sort employees by department
+    private static final Comparator<String> BY_DEPARTMENT =
+            Comparator.comparing(
+                    e -> e.split(" - ")[2],
+                    String.CASE_INSENSITIVE_ORDER
+            );
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         for (int i = 0; i < SampleData.EMPLOYEE_IDS.length; i++) {
-            employees.add(
-                SampleData.EMPLOYEE_IDS[i] + " - "
-                + SampleData.EMPLOYEE_NAMES[i] + " - "
-                + SampleData.DEPARTMENTS[i]
-            );
+            String id = SampleData.EMPLOYEE_IDS[i];
+            String record = id + " - "
+                    + SampleData.EMPLOYEE_NAMES[i] + " - "
+                    + SampleData.DEPARTMENTS[i];
+
+            employees.put(id, record);
         }
 
         while (true) {
@@ -33,6 +51,8 @@ public class ConsoleMenu {
             System.out.println("2. Check In / Check Out (FR2)");
             System.out.println("3. Apply for Leave (FR3)");
             System.out.println("4. Process Next Leave Request");
+            System.out.println("5. Employee Report Sorted by Name");
+            System.out.println("6. Employee Report Sorted by Department");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
 
@@ -41,36 +61,34 @@ public class ConsoleMenu {
             try {
                 switch (choice) {
                     case "1":
-                        System.out.println("\nEmployees:");
-                        employees.forEach(System.out::println);
+                        employees.values().forEach(System.out::println);
 
                         System.out.print("Add employee? (y/n): ");
                         if (scanner.nextLine().equalsIgnoreCase("y")) {
                             System.out.print("Employee ID: ");
                             String id = scanner.nextLine().trim();
 
-                            boolean exists = employees.stream()
-                                .anyMatch(e -> e.startsWith(id + " -"));
-
-                            if (id.isEmpty() || exists) {
+                            if (id.isEmpty() || employees.containsKey(id)) {
                                 System.out.println(
-                                    "Invalid or duplicate employee ID.");
+                                        "Invalid or duplicate employee ID.");
                                 break;
                             }
 
                             System.out.print("Employee name: ");
                             String name = scanner.nextLine().trim();
+
                             System.out.print("Department: ");
                             String department = scanner.nextLine().trim();
 
                             if (name.isEmpty() || department.isEmpty()) {
                                 System.out.println(
-                                    "Name and department are required.");
+                                        "Name and department are required.");
                                 break;
                             }
 
-                            employees.add(id + " - " + name
-                                + " - " + department);
+                            employees.put(id,
+                                    id + " - " + name + " - " + department);
+
                             System.out.println("Employee added.");
                         }
                         break;
@@ -79,10 +97,7 @@ public class ConsoleMenu {
                         System.out.print("Employee ID: ");
                         String id = scanner.nextLine().trim();
 
-                        boolean employeeExists = employees.stream()
-                            .anyMatch(e -> e.startsWith(id + " -"));
-
-                        if (!employeeExists) {
+                        if (!employees.containsKey(id)) {
                             System.out.println("Employee not found.");
                             break;
                         }
@@ -96,14 +111,13 @@ public class ConsoleMenu {
                         }
 
                         String key = id + "|" + LocalDate.now()
-                            + "|" + action;
+                                + "|" + action;
 
                         if (!attendanceActions.add(key)) {
                             System.out.println(
-                                "This attendance action was already recorded today.");
+                                    "This attendance action was already recorded today.");
                         } else {
-                            System.out.println(
-                                action.equals("1")
+                            System.out.println(action.equals("1")
                                     ? "Check-in recorded."
                                     : "Check-out recorded.");
                         }
@@ -113,41 +127,55 @@ public class ConsoleMenu {
                         System.out.print("Employee ID: ");
                         String employeeId = scanner.nextLine().trim();
 
-                        boolean found = employees.stream()
-                            .anyMatch(e -> e.startsWith(employeeId + " -"));
-
-                        if (!found) {
+                        if (!employees.containsKey(employeeId)) {
                             System.out.println("Employee not found.");
                             break;
                         }
 
                         System.out.print("Leave type: ");
                         String leaveType = scanner.nextLine().trim();
+
                         System.out.print("Start date (YYYY-MM-DD): ");
-                        String start = scanner.nextLine().trim();
+                        LocalDate startDate =
+                                LocalDate.parse(scanner.nextLine().trim());
+
                         System.out.print("End date (YYYY-MM-DD): ");
-                        String end = scanner.nextLine().trim();
+                        LocalDate endDate =
+                                LocalDate.parse(scanner.nextLine().trim());
 
-                        LocalDate startDate = LocalDate.parse(start);
-                        LocalDate endDate = LocalDate.parse(end);
-
-                        if (endDate.isBefore(startDate)
-                                || leaveType.isEmpty()) {
+                        if (leaveType.isEmpty()
+                                || endDate.isBefore(startDate)) {
                             System.out.println("Invalid leave request.");
                             break;
                         }
 
                         leaveRequests.offer(employeeId + " | "
-                            + leaveType + " | " + startDate + " to " + endDate);
+                                + leaveType + " | " + startDate
+                                + " to " + endDate);
 
                         System.out.println("Leave request added to queue.");
                         break;
 
                     case "4":
                         String request = leaveRequests.poll();
+
                         System.out.println(request == null
-                            ? "No pending leave requests."
-                            : "Processing leave request: " + request);
+                                ? "No pending leave requests."
+                                : "Processing leave request: " + request);
+                        break;
+
+                    case "5":
+                        System.out.println("\nEmployees sorted by name:");
+                        employees.values().stream()
+                                .sorted(BY_NAME)
+                                .forEach(System.out::println);
+                        break;
+
+                    case "6":
+                        System.out.println("\nEmployees sorted by department:");
+                        employees.values().stream()
+                                .sorted(BY_DEPARTMENT)
+                                .forEach(System.out::println);
                         break;
 
                     case "0":
@@ -159,7 +187,8 @@ public class ConsoleMenu {
                         System.out.println("Invalid choice.");
                 }
             } catch (RuntimeException exception) {
-                System.out.println("Error: " + exception.getMessage());
+                System.out.println("Error: Invalid input or operation. "
+                        + exception.getMessage());
             }
         }
     }
