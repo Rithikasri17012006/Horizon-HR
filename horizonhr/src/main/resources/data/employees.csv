@@ -1,0 +1,5 @@
+
+employeeId,name,email,department,reportingManager,role
+E001,Arun,arun@example.com,Engineering,M001,EMPLOYEE
+E002,Priya,priya@example.com,Human Resources,M002,EMPLOYEE
+E003,Kavin,kavin@example.com,Finance,M003,EMPLOYEE
