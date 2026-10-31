@@ -1,5 +1,5 @@
 
-package com.horizonhr.strategy;
+package com.horizonhr.Stratergy;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;

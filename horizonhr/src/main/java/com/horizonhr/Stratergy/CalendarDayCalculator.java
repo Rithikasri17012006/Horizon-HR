@@ -1,5 +1,5 @@
 
-package com.horizonhr.strategy;
+package com.horizonhr.Stratergy;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
