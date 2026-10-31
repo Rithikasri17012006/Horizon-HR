@@ -4,7 +4,7 @@ import com.horizonhr.data.CsvSeedDataLoader;
 import com.horizonhr.repository.*;
 import com.horizonhr.service.*;
 import com.horizonhr.Stratergy.LeaveDayCalculator;
-import com.horizonhr.Stratergy.WeekdayLeaveDayCalculator;
+
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,9 +35,21 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public LeaveDayCalculator leaveDayCalculator() {
-        return new WeekdayLeaveDayCalculator();
-    }
+public LeaveDayCalculator leaveDayCalculator() {
+    return (startDate, endDate) -> {
+        if (startDate == null || endDate == null || endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("Invalid leave dates");
+        }
+
+        long days = 0;
+        for (var date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            if (date.getDayOfWeek().getValue() < 6) {
+                days++;
+            }
+        }
+        return days;
+    };
+}
 
     @Bean
     public HolidayService holidayService(
